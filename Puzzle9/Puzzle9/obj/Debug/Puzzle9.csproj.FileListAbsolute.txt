@@ -1,0 +1,8 @@
+D:\repositories\Puzzle9\Puzzle9\Puzzle9\bin\Debug\Puzzle9.exe.config
+D:\repositories\Puzzle9\Puzzle9\Puzzle9\bin\Debug\Puzzle9.exe
+D:\repositories\Puzzle9\Puzzle9\Puzzle9\bin\Debug\Puzzle9.pdb
+D:\repositories\Puzzle9\Puzzle9\Puzzle9\obj\Debug\Puzzle9.csprojAssemblyReference.cache
+D:\repositories\Puzzle9\Puzzle9\Puzzle9\obj\Debug\Puzzle9.Properties.Resources.resources
+D:\repositories\Puzzle9\Puzzle9\Puzzle9\obj\Debug\Puzzle9.csproj.GenerateResource.cache
+D:\repositories\Puzzle9\Puzzle9\Puzzle9\obj\Debug\Puzzle9.exe
+D:\repositories\Puzzle9\Puzzle9\Puzzle9\obj\Debug\Puzzle9.pdb

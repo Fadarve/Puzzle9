@@ -8,7 +8,7 @@
 // </auto-generated>
 //------------------------------------------------------------------------------
 
-namespace puzzle99.Properties
+namespace Puzzle9.Properties
 {
 
 
