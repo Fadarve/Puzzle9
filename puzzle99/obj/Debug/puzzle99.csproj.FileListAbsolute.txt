@@ -1,0 +1,9 @@
+D:\programas\puzzle99\puzzle99\bin\Debug\puzzle99.exe.config
+D:\programas\puzzle99\puzzle99\bin\Debug\puzzle99.exe
+D:\programas\puzzle99\puzzle99\bin\Debug\puzzle99.pdb
+D:\programas\puzzle99\puzzle99\obj\Debug\puzzle99.csprojAssemblyReference.cache
+D:\programas\puzzle99\puzzle99\obj\Debug\puzzle99.Form1.resources
+D:\programas\puzzle99\puzzle99\obj\Debug\puzzle99.Properties.Resources.resources
+D:\programas\puzzle99\puzzle99\obj\Debug\puzzle99.csproj.GenerateResource.cache
+D:\programas\puzzle99\puzzle99\obj\Debug\puzzle99.exe
+D:\programas\puzzle99\puzzle99\obj\Debug\puzzle99.pdb
