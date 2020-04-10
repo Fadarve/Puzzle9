@@ -6,3 +6,4 @@ D:\repositories\Puzzle9\Puzzle9\Puzzle9\obj\Debug\Puzzle9.Properties.Resources.r
 D:\repositories\Puzzle9\Puzzle9\Puzzle9\obj\Debug\Puzzle9.csproj.GenerateResource.cache
 D:\repositories\Puzzle9\Puzzle9\Puzzle9\obj\Debug\Puzzle9.exe
 D:\repositories\Puzzle9\Puzzle9\Puzzle9\obj\Debug\Puzzle9.pdb
+D:\repositories\Puzzle9\Puzzle9\Puzzle9\obj\Debug\puzzle99.Form1.resources
