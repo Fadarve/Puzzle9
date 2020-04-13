@@ -42,6 +42,7 @@ namespace puzzle99
     {
         private Label[] numbers1 = new Label[81];  //arreglo que almacena todos los labels en orden
         List<Label> SelectNumbers = new List<Label>();  //lista que almacena los label que se mostraran
+        List<Label> ListaSolucion = new List<Label>();
 
         private int n;
 
@@ -63,6 +64,7 @@ namespace puzzle99
             n = 3;  //se fija inicialmente el tamano de n en 3
             CreateLabels();
             CmbTamanyos.SelectedIndex = 0;
+            rBtnEstInicial.Checked = true;
         }
 
         ///Listas///
@@ -385,16 +387,25 @@ namespace puzzle99
             //Inicializa las posicion inicial y final
 
             //cout << "\n POSICION INICIAL" << endl << endl;
+
+            //se reinicializan todos los valores globales
             List<int> inicial = new List<int>();
             List<int> final = new List<int>();
+            Arbol.Clear();
+            RutaSolucion.Clear();
+            ancho_padre = 0;
+            ancho_ultimo = 0;
+            profundidad = 1;
+            desfasados = -1;
+            nivel = 1;
 
+            //se rellenan las listas conforme la posicion de los label
             for (int i = 0; i < n * n; i++)
             {
-                if (SNumbers[i].Text == " ") { SNumbers[i].Text = "0"; }
-                inicial.Add(Convert.ToInt32(SNumbers[i].Text));
 
-                if (i + 1 == n * n) { final.Add(0); }
-                else { final.Add(i + 1); }
+                inicial.Add(Convert.ToInt32(SNumbers[i].Name));
+                final.Add(Convert.ToInt32(ListaSolucion[i].Name));
+
             }
 
             /////////////////////////ARBOL////////////////////////////////
@@ -426,7 +437,7 @@ namespace puzzle99
         private bool made;
         private int position;  //auxiliar para indicar la posicion en el arreglo del numero seleccionado
 
-        private bool verificarParidad; //Para verificar la paridad del algoritmo
+        private bool IsSolvable; //Para verificar la paridad del algoritmo
 
 
         //Función que crea automáticamente todos los 81 labels necesarios para el tamaño maxmo del puzzle
@@ -435,7 +446,7 @@ namespace puzzle99
             for (int i = 0; i < 81; i++)
             {
                 Label label = new Label();
-                label.Name = "Piece" + (i + 1).ToString();
+                label.Name = (i + 1).ToString();
                 label.AutoSize = false;
                 label.BackColor = System.Drawing.SystemColors.AppWorkspace;
                 label.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
@@ -452,7 +463,7 @@ namespace puzzle99
                 numbers1[i].Visible = false;
                 Controls.Add(numbers1[i]);
             }
-
+            numbers1[80].Name = "0";
             numbers1[80].Text = " ";
             numbers1[80].BackColor = System.Drawing.SystemColors.ControlDarkDark;
         }
@@ -466,34 +477,23 @@ namespace puzzle99
             }
 
             SelectNumbers.Clear();
+            ListaSolucion.Clear();
 
             for (int i = 0; i < n * n; i++)
             {
                 if (i != (n * n) - 1)
                 {
                     SelectNumbers.Add(numbers1[i]);
+                    ListaSolucion.Add(numbers1[i]);
                 }
                 else
                 {
                     SelectNumbers.Add(numbers1[80]);
+                    ListaSolucion.Add(numbers1[80]);
                 }
             }
 
-            int county = 0, posX = 40, posY = 40;
-
-            for (int i = 0; i < n * n; i++)
-            {
-                SelectNumbers[i].Location = new System.Drawing.Point(posX, posY);
-                SelectNumbers[i].Visible = true;
-                posX += 60;
-                county++;
-                if (county == n)
-                {
-                    posX = 40;
-                    posY += 60;
-                    county = 0;
-                }
-            }
+            DrawFromSelected(SelectNumbers);
         }
 
         // Dibuja loc controles adicionales del tablero
@@ -504,15 +504,23 @@ namespace puzzle99
 
         private void ObjClicked(object sender, MouseEventArgs e)
         {
+            selected = sender as Label;
+            if (rBtnEstInicial.Checked == true) { ClickauxFunc(ref SelectNumbers, e); }
+            else { ClickauxFunc(ref ListaSolucion, e); }
+
+        }
+
+        public void ClickauxFunc(ref List<Label> AuxList, MouseEventArgs e)
+        {
             if (e.Button == System.Windows.Forms.MouseButtons.Left)
             {
                 MouseDownLocation = e.Location;
-                selected = sender as Label;
+
                 aux1 = selected.Location;  //guarda la posicion de la ficha antes de ser movida
                 selected.BringToFront();
                 for (int i = 0; i < n * n; i++) //encuentra la posicion en el arreglo de la ficha
                 {
-                    if (aux1 == SelectNumbers[i].Location)
+                    if (aux1 == AuxList[i].Location)
                     {
                         position = i;
                     }
@@ -530,6 +538,47 @@ namespace puzzle99
             }
         }
 
+        private void ObjChangePosition(object sender, MouseEventArgs e)
+        {
+            if (rBtnEstInicial.Checked == true) { ChangePositions(ref SelectNumbers, e); }
+            else { ChangePositions(ref ListaSolucion, e); }
+        }
+
+        public void ChangePositions(ref List<Label> ListaL, MouseEventArgs e)
+        {
+            made = false;
+            if (selected != null)
+            {
+                for (int i = 0; i < n * n; i++)
+                {
+                    /* condicional que verifica que cuando el mouse sea levantado, 
+                     * sea dentro de los limites de alguna de las fichas diferentes a la seleccionada*/
+                    if ((selected.Left + e.X) > ListaL[i].Left && (selected.Left + e.X) < (ListaL[i].Left + ListaL[i].Width) && (selected.Top + e.Y) > ListaL[i].Top && (selected.Top + e.Y) < (ListaL[i].Top + ListaL[i].Height) && made == false && i != position)
+                    {
+                        //se actualizan las posiciones de los labels visualmente y en el arreglo
+
+                        aux2 = ListaL[i].Location;
+                        selected.Location = aux2;
+                        ListaL[i].Location = aux1;
+
+                        auxLabel = ListaL[i];
+
+                        ListaL[i] = ListaL[position];
+                        ListaL[position] = auxLabel;
+
+                        made = true;  //indica si ya se realizo el cambio para que la funcion no vuelva a entrar al if
+                    }
+                }
+                /* si no se encontró concordancia con ninguna de las otras fichas, 
+                   devuelve la seleccionada a su posicion inicial*/
+                if (made == false)
+                {
+                    selected.Location = aux1;
+                    made = true;
+                }
+            }
+            selected = null;
+        }
         private void Form1_Load(object sender, EventArgs e)
         {
 
@@ -569,21 +618,22 @@ namespace puzzle99
 
 
         //Función para verificar la pariedad de la solución
-        public bool paridadSolucion()
+
+        public void HallarInversiones(List<Label> Lista, ref int invert, ref int rowNum)
         {
-            int invert = 0, rowNum = 1, columnCount = 0;
+            int columnCount = 0;
             int auxPrevio, auxSiguiente;
             // Conteno de inversiones en las fichas
             for (int i = 0; i < n * n; i++)
             {
-                if (SelectNumbers[i].Text != " ")
+                if (Lista[i].Name != "0")
                 {
                     for (int j = i + 1; j < n * n; j++)
                     {
-                        auxPrevio = int.Parse(SelectNumbers[i].Text);           // Auxiliar de la etiqueta de la posición previa convertido de Label a Int
-                        if (SelectNumbers[j].Text != " ")
+                        auxPrevio = int.Parse(Lista[i].Name);           // Auxiliar de la etiqueta de la posición previa convertido de Label a Int
+                        if (Lista[j].Name != "0")
                         {
-                            auxSiguiente = int.Parse(SelectNumbers[j].Text);    // Auxiliar de la etiqueta de la posición siguiente convertido de Label a Int
+                            auxSiguiente = int.Parse(Lista[j].Name);    // Auxiliar de la etiqueta de la posición siguiente convertido de Label a Int
                             if (auxPrevio > auxSiguiente)
                             {
                                 invert++;
@@ -593,7 +643,7 @@ namespace puzzle99
                 }
             }
 
-            for (int i = n - 1; i >= 0; i--)
+            for (int i = (n * n) - 1; i >= 0; i--)
             {
                 columnCount++;
                 if (columnCount == n + 1)
@@ -601,14 +651,57 @@ namespace puzzle99
                     columnCount = 0;
                     rowNum++;
                 }
-                if (SelectNumbers[i].Text == " ")
+                if (SelectNumbers[i].Name == "0")
                 {
                     break;
                 }
             }
+        }
 
+        public bool paridadSolucion()
+        {
+            int invertInicial = 0, invertFinal = 0, rowNumIni = 1, rowNumFin = 1;
+
+            HallarInversiones(SelectNumbers, ref invertInicial, ref rowNumIni);
+            HallarInversiones(ListaSolucion, ref invertFinal, ref rowNumFin);
+
+            IsSolvable = false;
+            // CONDICIONES
+
+            //Si n es impar 
+            if (n % 2 == 1)
+            {
+                if ((invertInicial % 2 == 0 && invertFinal % 2 == 0) || (invertInicial % 2 == 1 && invertFinal % 2 == 1))
+                {
+                    IsSolvable = true;
+                }
+
+            }
+            else
+            {
+                if ((invertInicial % 2 == 0 && rowNumIni % 2 == 1) || (invertInicial % 2 == 1 && rowNumIni % 2 == 0))
+                {
+                    if ((invertFinal % 2 == 0 && rowNumFin % 2 == 1) || (invertFinal % 2 == 1 && rowNumFin % 2 == 0))
+                    {
+                        IsSolvable = true;
+                    }
+                }
+                else
+                {
+                    if ((invertInicial % 2 == 0 && rowNumIni % 2 == 0) || (invertInicial % 2 == 1 && rowNumIni % 2 == 1))
+                    {
+                        if ((invertFinal % 2 == 0 && rowNumFin % 2 == 0) || (invertFinal % 2 == 1 && rowNumFin % 2 == 1))
+                        {
+                            IsSolvable = true;
+                        }
+                    }
+                }
+            }
+            /*
 
             // CONDICIONES
+           
+
             // Si N es impar y el número de inversiones es par en el estado de entrada.
             if (n % 2 == 1 && invert % 2 == 0)
             {
@@ -633,9 +726,9 @@ namespace puzzle99
             else
             {
                 verificarParidad = false;                   // NO SOLUCIONABLE
-            }
+            }*/
 
-            return verificarParidad;
+            return IsSolvable;
         }
 
         //Para que sea visible el mensaje de verificación de paridado
@@ -643,7 +736,7 @@ namespace puzzle99
         {
             paridadSolucion();
 
-            if (verificarParidad == false)
+            if (IsSolvable == false)
             {
                 MessageBox.Show("No es posible resolver este rompecabeza. Intente acomodar las fichas nuevamente");
             }
@@ -653,6 +746,7 @@ namespace puzzle99
                 this.textoMovimientos.Visible = true;
                 this.labelTiempo.Visible = true;
                 this.textoTiempo.Visible = true;
+                rBtnEstInicial.Checked = true;
                 iniciarLogica(SelectNumbers);
 
                 /*ThreadStart start = new ThreadStart(Animacion);
@@ -667,55 +761,31 @@ namespace puzzle99
 
         }
 
+        private void rBtnEstInicial_CheckedChanged(object sender, EventArgs e)
+        {
+            if (rBtnEstInicial.Checked == true)
+            {
+                DrawFromSelected(SelectNumbers);
+            }
+            else
+            {
+                DrawFromSelected(ListaSolucion);
+            }
+        }
+
         private void label1_Click_1(object sender, EventArgs e)
         {
 
         }
 
-        private void ObjChangePosition(object sender, MouseEventArgs e)
-        {
-            made = false;
-            if (selected != null)
-            {
-                for (int i = 0; i < n * n; i++)
-                {
-                    /* condicional que verifica que cuando el mouse sea levantado, 
-                     * sea dentro de los limites de alguna de las fichas diferentes a la seleccionada*/
-                    if ((selected.Left + e.X) > SelectNumbers[i].Left && (selected.Left + e.X) < (SelectNumbers[i].Left + SelectNumbers[i].Width) && (selected.Top + e.Y) > SelectNumbers[i].Top && (selected.Top + e.Y) < (SelectNumbers[i].Top + SelectNumbers[i].Height) && made == false && i != position)
-                    {
-                        //se actualizan las posiciones de los labels visualmente y en el arreglo
-
-                        aux2 = SelectNumbers[i].Location;
-                        selected.Location = aux2;
-                        SelectNumbers[i].Location = aux1;
-
-                        auxLabel = SelectNumbers[i];
-
-                        SelectNumbers[i] = SelectNumbers[position];
-                        SelectNumbers[position] = auxLabel;
-
-                        made = true;  //indica si ya se realizo el cambio para que la funcion no vuelva a entrar al if
-                    }
-                }
-                /* si no se encontró concordancia con ninguna de las otras fichas, 
-                   devuelve la seleccionada a su posicion inicial*/
-                if (made == false)
-                {
-                    selected.Location = aux1;
-                    made = true;
-                }
-            }
-            selected = null;
-        }
-
-        public void DrawFromSelected()
+        public void DrawFromSelected(List<Label> Lista)
         {
             int county = 0, posX = 40, posY = 40;
 
             for (int i = 0; i < n * n; i++)
             {
-                SelectNumbers[i].Location = new System.Drawing.Point(posX, posY);
-                SelectNumbers[i].Visible = true;
+                Lista[i].Location = new System.Drawing.Point(posX, posY);
+                Lista[i].Visible = true;
                 posX += 60;
                 county++;
                 if (county == n)
@@ -735,7 +805,7 @@ namespace puzzle99
 
             for (int i = 0; i < n * n; i++)
             {
-                auxNumbers.Add(Convert.ToInt32(SelectNumbers[i].Text));
+                auxNumbers.Add(Convert.ToInt32(SelectNumbers[i].Name));
             }
 
             for (int i = 0; i < RutaSolucion.Count; i++)
@@ -753,12 +823,8 @@ namespace puzzle99
                     SelectNumbers[j] = SelectNumbers[auxIndex];
                     SelectNumbers[auxIndex] = auxLabel;
 
-
-                    //SelectNumbers[j].Location = SelectNumbers[auxIndex].Location;
-                    //SelectNumbers[auxIndex].Location = auxLoc;
-
                 }
-                DrawFromSelected();
+                DrawFromSelected(SelectNumbers);
                 await Task.Delay(1500);
             }
 

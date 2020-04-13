@@ -38,6 +38,8 @@
             this.textoMovimientos = new System.Windows.Forms.TextBox();
             this.textoTiempo = new System.Windows.Forms.TextBox();
             this.contextMenuStrip1 = new System.Windows.Forms.ContextMenuStrip(this.components);
+            this.rBtnEstInicial = new System.Windows.Forms.RadioButton();
+            this.rBtnEstFinal = new System.Windows.Forms.RadioButton();
             this.SuspendLayout();
             // 
             // CmbTamanyos
@@ -76,7 +78,7 @@
             // botonResolver
             // 
             this.botonResolver.Location = new System.Drawing.Point(784, 63);
-            this.botonResolver.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.botonResolver.Margin = new System.Windows.Forms.Padding(4);
             this.botonResolver.Name = "botonResolver";
             this.botonResolver.Size = new System.Drawing.Size(199, 28);
             this.botonResolver.TabIndex = 13;
@@ -114,7 +116,7 @@
             // 
             this.textoMovimientos.BackColor = System.Drawing.SystemColors.Window;
             this.textoMovimientos.Location = new System.Drawing.Point(917, 130);
-            this.textoMovimientos.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.textoMovimientos.Margin = new System.Windows.Forms.Padding(4);
             this.textoMovimientos.Name = "textoMovimientos";
             this.textoMovimientos.ReadOnly = true;
             this.textoMovimientos.Size = new System.Drawing.Size(71, 22);
@@ -125,7 +127,7 @@
             // 
             this.textoTiempo.BackColor = System.Drawing.SystemColors.Window;
             this.textoTiempo.Location = new System.Drawing.Point(871, 169);
-            this.textoTiempo.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.textoTiempo.Margin = new System.Windows.Forms.Padding(4);
             this.textoTiempo.Name = "textoTiempo";
             this.textoTiempo.ReadOnly = true;
             this.textoTiempo.Size = new System.Drawing.Size(117, 22);
@@ -138,11 +140,36 @@
             this.contextMenuStrip1.Name = "contextMenuStrip1";
             this.contextMenuStrip1.Size = new System.Drawing.Size(61, 4);
             // 
+            // rBtnEstInicial
+            // 
+            this.rBtnEstInicial.AutoSize = true;
+            this.rBtnEstInicial.Location = new System.Drawing.Point(784, 294);
+            this.rBtnEstInicial.Name = "rBtnEstInicial";
+            this.rBtnEstInicial.Size = new System.Drawing.Size(112, 21);
+            this.rBtnEstInicial.TabIndex = 18;
+            this.rBtnEstInicial.TabStop = true;
+            this.rBtnEstInicial.Text = "Estado Inicial";
+            this.rBtnEstInicial.UseVisualStyleBackColor = true;
+            this.rBtnEstInicial.CheckedChanged += new System.EventHandler(this.rBtnEstInicial_CheckedChanged);
+            // 
+            // rBtnEstFinal
+            // 
+            this.rBtnEstFinal.AutoSize = true;
+            this.rBtnEstFinal.Location = new System.Drawing.Point(784, 322);
+            this.rBtnEstFinal.Name = "rBtnEstFinal";
+            this.rBtnEstFinal.Size = new System.Drawing.Size(107, 21);
+            this.rBtnEstFinal.TabIndex = 19;
+            this.rBtnEstFinal.TabStop = true;
+            this.rBtnEstFinal.Text = "Estado Final";
+            this.rBtnEstFinal.UseVisualStyleBackColor = true;
+            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(999, 750);
+            this.Controls.Add(this.rBtnEstFinal);
+            this.Controls.Add(this.rBtnEstInicial);
             this.Controls.Add(this.textoTiempo);
             this.Controls.Add(this.textoMovimientos);
             this.Controls.Add(this.labelTiempo);
@@ -170,6 +197,8 @@
         private System.Windows.Forms.TextBox textoMovimientos;
         private System.Windows.Forms.TextBox textoTiempo;
         private System.Windows.Forms.ContextMenuStrip contextMenuStrip1;
+        private System.Windows.Forms.RadioButton rBtnEstInicial;
+        private System.Windows.Forms.RadioButton rBtnEstFinal;
     }
 }
 
