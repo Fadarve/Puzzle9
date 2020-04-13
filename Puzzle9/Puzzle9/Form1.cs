@@ -5,17 +5,46 @@ using System.Data;
 using System.Drawing;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 
 namespace puzzle99
 {
+    public unsafe struct Estado
+    {
+        public List<int> Ldatos;
+        public int h; //Valor que calcula cuantas fichas estan fuera de lugar 
+        public int g; //nivel donde esta el nodo
+        public int padre; //Posicion del padre en el arbol (nivel)
+        public int vacio;
+        public int tamk;
+        public int tam;
+        public int nmoves; //Cantidad de movimientos posible
+        public int move_anterior;
+        public List<char> Lmoves;
 
+        public void setvacio(int valor) { this.vacio = valor; }
+        public void setmove_anterior(int valor) { this.move_anterior = valor; }
+        public void seth(int valor) { this.h = valor; }
+        public void setnmoves(int valor) { this.nmoves = valor; }
+
+        public void setLmoves(char m0, char m1, char m2, char m3) { this.Lmoves[0] = m0; this.Lmoves[1] = m1; this.Lmoves[2] = m2; this.Lmoves[3] = m3; }
+
+
+    }
+
+    public unsafe struct Arbol
+    {
+        public List<Estado> Lestados;
+    }
     public partial class Form1 : Form
     {
         private Label[] numbers1 = new Label[81];  //arreglo que almacena todos los labels en orden
         List<Label> SelectNumbers = new List<Label>();  //lista que almacena los label que se mostraran
+
         private int n;
+
         public Form1()
         {
             InitializeComponent();
@@ -36,9 +65,363 @@ namespace puzzle99
             CmbTamanyos.SelectedIndex = 0;
         }
 
+        ///Listas///
+
+        //Rompecabezas
+        unsafe void intercambio_fichas(List<int> Lfichas, int ps1, int ps2)
+        {
+            if (Lfichas.Count != 0)
+            {
+                int aux = Lfichas[ps1];
+                Lfichas[ps1] = Lfichas[ps2];
+                Lfichas[ps2] = aux;
+            }
+            else
+            {
+                Console.Write("La lista no tiene elementos");
+            }
+
+
+        }
+
+        //Arbol => (2)
+        List<Estado> Arbol = new List<Estado>();
+
+        List<Estado> RutaSolucion = new List<Estado>();
+
+        public unsafe int ancho_padre = 0;
+        public unsafe int ancho_ultimo = 0; //siempre apunta al ultimo de la lista de estados
+        int profundidad = 1;
+        int desfasados = -1;
+        int nivel = 1;
+
+        unsafe void agregar_estado(List<Estado> lestados, List<int> ldatos, int h, int ps_vacio, int tamk = 0, int tam = 0, int niv = 0, int ps_padre = -1, char r = 'n', char le = 'n', char u = 'n', char d = 'n', int nm = 0, int ma = -1, int opc = 'f')
+        {
+            List<char> movimientos = new List<char>() { r, le, u, d };
+            Estado nuevoEstado = new Estado()
+            { Ldatos = ldatos, Lmoves = movimientos, h = h, vacio = ps_vacio, tamk = tamk, tam = tam, g = niv, padre = ps_padre, nmoves = nm, move_anterior = ma };
+            if (opc == 's')
+            {
+                lestados.Insert(1, nuevoEstado);
+            }
+            else { lestados.Add(nuevoEstado); }
+
+        }
+
+        unsafe int comparar_estados_ham(List<Estado> arbol, Estado estadoActual, List<int> final)
+        {
+
+            int i = 0;
+            int h = 0;
+            while (i < n * n)
+            {
+                //cout << acceder_lista(c1, i) << " vs " << acceder_lista(final, i) << endl;
+                if (estadoActual.Ldatos[i] == final[i]) { h = h; }
+                else { h = h + 1; }
+                i++;
+            }
+            //cout << endl;
+
+            return h;
+
+        }
+
+        unsafe void buscar_movimientos(Estado estadoActual)
+        {
+
+            //cout << "Nueva busqueda" << endl;
+            //cout << "direccion: "<< p <<", posicion: " << p->vacio << ", tamk: " << p->tamk << ", tam: " << p->tam << endl;
+
+            int n2 = n - 1;
+            int t = estadoActual.Ldatos.Count - 1;
+            int v = estadoActual.vacio;
+
+            //Esquinas superiores
+            Estado auxestado = estadoActual;
+            if (v == 0)
+            {
+                //cout << "Tiene dos movimientos (esquinas) sup izq " << endl;
+
+                auxestado.setLmoves('r', 'n', 'n', 'd');
+                auxestado.setnmoves(2);
+                estadoActual = auxestado;
+            }
+            else if (v == n2)
+            {
+                //cout << "Tiene dos movimientos (esquinas) sup der " << endl;
+                auxestado.setLmoves('n', 'l', 'n', 'd');
+                auxestado.setnmoves(2);
+                estadoActual = auxestado;
+
+            }
+            //Esquinas inferiores
+            else if (v == t - n2)
+            {
+                //cout << "Tiene dos movimientos (esquinas) inf izq" << endl;
+                auxestado.setnmoves(2);
+                estadoActual = auxestado;
+                auxestado.setLmoves('r', 'n', 'u', 'n');
+
+                estadoActual = auxestado;
+            }
+            else if (v == t)
+            {
+                //cout << "Tiene dos movimientos (esquinas) inf der" << endl;
+                auxestado.setLmoves('n', 'l', 'u', 'n');
+                auxestado.setnmoves(2);
+                estadoActual = auxestado;
+
+            }
+            //Bordes horizontales
+            else if (v > 0 && v < n2)
+            {
+                //cout << "Tiene tres movimientos (bordes horizontales) sup" << endl;
+                auxestado.setLmoves('r', 'l', 'n', 'd');
+                auxestado.setnmoves(3);
+                estadoActual = auxestado;
+
+            }
+            else if (v > t - n2 && v < t)
+            {
+                //cout << "Tiene tres movimientos (bordes horizontales) inf" << endl;
+                auxestado.setLmoves('r', 'l', 'u', 'n');
+                auxestado.setnmoves(3);
+                estadoActual = auxestado;
+
+            }
+            //Bordes verticales
+            else if (v % (n2 + 1) == 0)
+            {
+                //cout << "Tiene tres movimientos (bordes vertical - izq)" << endl;
+                auxestado.setLmoves('r', 'n', 'u', 'd');
+                auxestado.setnmoves(3);
+                estadoActual = auxestado;
+
+            }
+            else if ((v + 1) % (n2 + 1) == 0)
+            {
+                //cout << "Tiene tres movimientos (bordes vertical - der)" << endl;
+                auxestado.setLmoves('n', 'l', 'u', 'd');
+                auxestado.setnmoves(3);
+                estadoActual = auxestado;
+
+            }
+            //Demas posiciones
+            else
+            {
+                //cout << "Tiene cuatro movimientos (central) - restringido a tres por el movimiento anterios" << endl;
+                auxestado.setLmoves('r', 'l', 'u', 'd');
+                auxestado.setnmoves(4);
+                estadoActual = auxestado;
+
+            }
+
+
+            if (estadoActual.move_anterior == 0)
+            {
+
+                auxestado.setLmoves('n', auxestado.Lmoves[1], auxestado.Lmoves[2], auxestado.Lmoves[3]);
+                auxestado.setnmoves(auxestado.nmoves - 1);
+                estadoActual = auxestado;
+            }
+
+            else if (estadoActual.move_anterior == 1)
+            {
+                auxestado.setLmoves(auxestado.Lmoves[0], 'n', auxestado.Lmoves[2], auxestado.Lmoves[3]);
+                auxestado.setnmoves(auxestado.nmoves - 1);
+                estadoActual = auxestado;
+            }
+            else if (estadoActual.move_anterior == 2)
+            {
+                auxestado.setLmoves(auxestado.Lmoves[0], auxestado.Lmoves[1], 'n', auxestado.Lmoves[3]);
+                auxestado.setnmoves(auxestado.nmoves - 1);
+                estadoActual = auxestado;
+            }
+            else if (estadoActual.move_anterior == 3)
+            {
+                auxestado.setLmoves(auxestado.Lmoves[0], auxestado.Lmoves[1], auxestado.Lmoves[2], 'n');
+                auxestado.setnmoves(auxestado.nmoves - 1);
+                estadoActual = auxestado;
+            }
+
+
+        }
+        unsafe void intercambio_2(List<Estado> l, List<int> final)
+        {
+            int i = 0;
+
+            if (l.Count != 0)
+            {
+
+                for (int k = 0; k < 4; k++)
+                {
+
+                    if (l[ancho_padre].Lmoves[k] != 'n')
+                    {
+                        List<int> copia = new List<int>(l[ancho_padre].Ldatos);
+
+                        nivel++;
+                        agregar_estado(l, copia, 0, l[ancho_padre].vacio, l[ancho_padre].tamk, l[ancho_padre].tam, nivel, l[ancho_padre].g);
+
+                        ancho_ultimo++;
+                        Estado auxestado = l[ancho_ultimo];
+
+
+                        switch (l[ancho_padre].Lmoves[k])
+                        {
+
+                            case 'r':
+                                //Derecha
+
+
+                                intercambio_fichas(l[ancho_ultimo].Ldatos, l[ancho_ultimo].vacio, l[ancho_ultimo].vacio + 1);
+                                auxestado.setvacio(l[ancho_ultimo].vacio + 1);
+                                auxestado.setmove_anterior(1);
+                                l[ancho_ultimo] = auxestado;
+
+                                break;
+                            case 'l':
+                                //Izquierda
+                                intercambio_fichas(l[ancho_ultimo].Ldatos, l[ancho_ultimo].vacio, l[ancho_ultimo].vacio - 1);
+                                auxestado.setvacio(l[ancho_ultimo].vacio - 1);
+                                auxestado.setmove_anterior(0);
+                                l[ancho_ultimo] = auxestado;
+
+                                break;
+                            case 'u':
+                                //Arriba
+                                intercambio_fichas(l[ancho_ultimo].Ldatos, l[ancho_ultimo].vacio, l[ancho_ultimo].vacio - l[ancho_ultimo].tamk);
+                                auxestado.setvacio(l[ancho_ultimo].vacio - l[ancho_ultimo].tamk);
+                                auxestado.setmove_anterior(3);
+                                l[ancho_ultimo] = auxestado;
+
+
+                                break;
+                            case 'd':
+                                //Abajo
+                                intercambio_fichas(l[ancho_ultimo].Ldatos, l[ancho_ultimo].vacio, l[ancho_ultimo].vacio + l[ancho_ultimo].tamk);
+                                auxestado.setvacio(l[ancho_ultimo].vacio + l[ancho_ultimo].tamk);
+                                auxestado.setmove_anterior(2);
+                                l[ancho_ultimo] = auxestado;
+
+                                break;
+                            default:
+                                break;
+
+                        }
+
+                        //Define los posibles moviemientos del kernel
+                        buscar_movimientos(l[ancho_ultimo]);
+
+                        //Define el costo
+                        desfasados = comparar_estados_ham(l, l[ancho_ultimo], final);
+
+                        Estado auxestado2 = l[ancho_ultimo];
+                        auxestado2.seth(desfasados);
+                        l[ancho_ultimo] = auxestado2;
+
+                        //l[ancho_ultimo].seth(50);
+                        //desfasados = l[ancho_ultimo].h;
+                        if (desfasados == 0) { break; }
+                    }
+
+
+                }
+
+                //Establece el siguiente nodo (por ancho) como nuevo padre 
+                ancho_padre++;
+
+            }
+            else
+            {
+                //cout << "La lista no tiene elementos" << endl;
+            }
+
+
+        }
+
+        unsafe void ruta(List<Estado> arb, List<Estado> sol)
+        {
+
+            int j = 0;
+            int i = 1;
+            int f = ancho_ultimo;
+            while (arb[f].padre > -1)
+            {
+                i = 1;
+
+                //Agrega el nodo padre del resultado a la lista que sigue el camino solucion
+                agregar_estado(
+                    sol,
+                    arb[f].Ldatos,
+                    arb[f].h,
+                    arb[f].vacio,
+                    arb[f].tamk,
+                    arb[f].tam,
+                    arb[f].g,
+                    arb[f].padre,
+                    arb[f].Lmoves[0],
+                    arb[f].Lmoves[1],
+                    arb[f].Lmoves[2],
+                    arb[f].Lmoves[3],
+                    arb[f].nmoves,
+                    arb[f].move_anterior,
+                    's'
+                );
+                f = arb[f].padre - 1;
+
+                j++;
+
+                profundidad++;
+
+            }
+
+
+        }
+
+        unsafe void iniciarLogica(List<Label> SNumbers)
+        {
+            ////////////////////////PARAMETROS INICIALES///////////////////////////////
+            //Inicializa las posicion inicial y final
+
+            //cout << "\n POSICION INICIAL" << endl << endl;
+            List<int> inicial = new List<int>();
+            List<int> final = new List<int>();
+
+            for (int i = 0; i < n * n; i++)
+            {
+                if (SNumbers[i].Text == " ") { SNumbers[i].Text = "0"; }
+                inicial.Add(Convert.ToInt32(SNumbers[i].Text));
+
+                if (i + 1 == n * n) { final.Add(0); }
+                else { final.Add(i + 1); }
+            }
+
+            /////////////////////////ARBOL////////////////////////////////
+
+
+            agregar_estado(Arbol, inicial, -1, inicial.IndexOf(0), n, n * n, nivel);
+            buscar_movimientos(Arbol[0]);
+
+            ////////////////////////SOLUCION////////////////////////////////
+
+            agregar_estado(RutaSolucion, inicial, -1, inicial.IndexOf(0), n, n * n, nivel);
+            buscar_movimientos(RutaSolucion[0]);
+
+            while (desfasados != 0)
+            {
+
+                intercambio_2(Arbol, final);
+
+            }
+            ruta(Arbol, RutaSolucion);
+
+
+        }
+
         private Point MouseDownLocation; //posicion en la que se hace click al seleccionar una ficha
         private Label selected = null;   //selecciona el label del objeto clickeado
-        private Point aux1, aux2;
+        private Point aux1, aux2, auxLoc, auxLoc2;
         private Label auxLabel;
         private bool made;
         private int position;  //auxiliar para indicar la posicion en el arreglo del numero seleccionado
@@ -270,6 +653,12 @@ namespace puzzle99
                 this.textoMovimientos.Visible = true;
                 this.labelTiempo.Visible = true;
                 this.textoTiempo.Visible = true;
+                iniciarLogica(SelectNumbers);
+
+                /*ThreadStart start = new ThreadStart(Animacion);
+                Thread myThread = new Thread(start);
+                myThread.Start();*/
+                Animacion();
             }
         }
 
@@ -299,7 +688,9 @@ namespace puzzle99
                         aux2 = SelectNumbers[i].Location;
                         selected.Location = aux2;
                         SelectNumbers[i].Location = aux1;
+
                         auxLabel = SelectNumbers[i];
+
                         SelectNumbers[i] = SelectNumbers[position];
                         SelectNumbers[position] = auxLabel;
 
@@ -315,6 +706,62 @@ namespace puzzle99
                 }
             }
             selected = null;
+        }
+
+        public void DrawFromSelected()
+        {
+            int county = 0, posX = 40, posY = 40;
+
+            for (int i = 0; i < n * n; i++)
+            {
+                SelectNumbers[i].Location = new System.Drawing.Point(posX, posY);
+                SelectNumbers[i].Visible = true;
+                posX += 60;
+                county++;
+                if (county == n)
+                {
+                    posX = 40;
+                    posY += 60;
+                    county = 0;
+                }
+            }
+        }
+        public async void Animacion()
+        {
+            Label auxLabel;
+            int auxIndex, auxNum;
+            List<int> auxNumbers = new List<int>();
+            Point auxLoc;
+
+            for (int i = 0; i < n * n; i++)
+            {
+                auxNumbers.Add(Convert.ToInt32(SelectNumbers[i].Text));
+            }
+
+            for (int i = 0; i < RutaSolucion.Count; i++)
+            {
+                for (int j = 0; j < n * n; j++)
+                {
+                    auxIndex = auxNumbers.IndexOf(RutaSolucion[i].Ldatos[j]);
+                    auxNum = auxNumbers[j];
+                    auxLabel = SelectNumbers[j];
+                    //auxLoc = SelectNumbers[j].Location;
+
+                    auxNumbers[j] = auxNumbers[auxIndex];
+                    auxNumbers[auxIndex] = auxNum;
+
+                    SelectNumbers[j] = SelectNumbers[auxIndex];
+                    SelectNumbers[auxIndex] = auxLabel;
+
+
+                    //SelectNumbers[j].Location = SelectNumbers[auxIndex].Location;
+                    //SelectNumbers[auxIndex].Location = auxLoc;
+
+                }
+                DrawFromSelected();
+                await Task.Delay(1500);
+            }
+
         }
     }
 }
